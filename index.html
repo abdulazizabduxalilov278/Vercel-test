@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel Sinov Loyihasi</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --container-bg: #fff;
+        }
+
+        /* Qorong'u rejim (Dark Mode) uchun ranglar */
+        body.dark-mode {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --container-bg: #16213e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: 0.3s;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            transition: 0.3s;
+        }
+
+        h1 {
+            color: #0070f3; /* Vercel ko'k rangi */
+        }
+
+        button {
+            background-color: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Vercel'ga Xush Kelibsiz!</h1>
+        <p>Bu mening Vercel'dagi birinchi sinov loyiham. Kod muvaffaqiyatli ishladi.</p>
+        <button id="theme-btn">Qorong'u rejimni yoqish</button>
+    </div>
+
+    <script>
+        const btn = document.getElementById('theme-btn');
+        const body = document.body;
+
+        btn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            if(body.classList.contains('dark-mode')) {
+                btn.textContent = "Yorug' rejimni yoqish";
+            } else {
+                btn.textContent = "Qorong'u rejimni yoqish";
+            }
+        });
+    </script>
+
+</body>
+</html>
