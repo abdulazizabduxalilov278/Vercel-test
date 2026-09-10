@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vercel Sinov Loyihasi</title>
+    <title>Vercel va Supabase Loyihasi</title>
+    
+    <!-- Supabase ulash -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         :root {
             --bg-color: #f4f4f9;
             --text-color: #333;
             --container-bg: #fff;
+            --input-bg: #fff;
+            --input-border: #ccc;
         }
 
-        /* Qorong'u rejim (Dark Mode) uchun ranglar */
+        /* Qorong'u rejim ranglari */
         body.dark-mode {
             --bg-color: #1a1a2e;
             --text-color: #e0e0e0;
             --container-bg: #16213e;
+            --input-bg: #1f2a4c;
+            --input-border: #444;
         }
 
         body {
@@ -37,52 +45,117 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
             max-width: 400px;
+            width: 90%;
             transition: 0.3s;
         }
 
-        h1 {
-            color: #0070f3; /* Vercel ko'k rangi */
-        }
+        h1 { color: #0070f3; margin-top: 0; }
 
         button {
             background-color: #0070f3;
             color: white;
             border: none;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 14px;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
             transition: 0.3s;
+            width: 100%;
         }
 
-        button:hover {
-            background-color: #005bb5;
+        button:hover { background-color: #005bb5; }
+        
+        #theme-btn { background-color: #555; }
+        #theme-btn:hover { background-color: #333; }
+
+        input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            outline: none;
         }
+        
+        #natija { margin-top: 15px; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Vercel'ga Xush Kelibsiz!</h1>
-        <p>Bu mening Vercel'dagi birinchi sinov loyiham. Kod muvaffaqiyatli ishladi.</p>
+        <h1>Xabar Yuborish</h1>
+        <p>Supabase bazasiga xabar qoldiring.</p>
+        
+        <!-- Xabar kiritish qismi -->
+        <input type="text" id="xabarInput" placeholder="Matn kiriting...">
+        <button id="yuborishBtn">Jo'natish</button>
+        <p id="natija"></p>
+
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--input-border);">
+        
+        <!-- Rejimni o'zgartirish qismi -->
         <button id="theme-btn">Qorong'u rejimni yoqish</button>
     </div>
 
     <script>
+        // --- DARK MODE LOGIKASI ---
         const btn = document.getElementById('theme-btn');
         const body = document.body;
 
         btn.addEventListener('click', () => {
             body.classList.toggle('dark-mode');
-            
             if(body.classList.contains('dark-mode')) {
                 btn.textContent = "Yorug' rejimni yoqish";
             } else {
                 btn.textContent = "Qorong'u rejimni yoqish";
             }
         });
+
+        // --- SUPABASE LOGIKASI ---
+        // DIQQAT: Supabase loyihangizdan olingan URL va KEY ni shu yerga kiriting!
+        const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co/';
+        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('yuborishBtn').addEventListener('click', async () => {
+            const kiritilganMatn = document.getElementById('xabarInput').value;
+            const natija = document.getElementById('natija');
+
+            // Agar input bo'sh bo'lsa, ogohlantirish
+            if(!kiritilganMatn) {
+                natija.style.color = "orange";
+                natija.textContent = "Iltimos, matn kiriting!";
+                return;
+            }
+
+            natija.style.color = "var(--text-color)";
+            natija.textContent = "Yuborilmoqda...";
+
+            // Bazadagi "xabarlar" jadvaliga ma'lumotni kiritish
+            const { data, error } = await supabase
+                .from('xabarlar') 
+                .insert([ 
+                    { matn: kiritilganMatn } 
+                ]);
+
+            if (error) {
+                natija.style.color = "red";
+                natija.textContent = "Xato: " + error.message;
+            } else {
+                natija.style.color = "green";
+                natija.textContent = "Muvaffaqiyatli yuborildi!";
+                document.getElementById('xabarInput').value = ''; // Inputni tozalash
+            }
+        });
+        
+
     </script>
 
+   
+
 </body>
-</html>
+</html>     
