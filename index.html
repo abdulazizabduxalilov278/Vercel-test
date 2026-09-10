@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vercel va Supabase Loyihasi</title>
     
+    <!-- Supabase kutubxonasi -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
@@ -95,7 +96,7 @@
             font-size: 14px;
         }
 
-        /* Ko'zga tashlanadigan chiqib keluvchi xabar (Toast) dizayni */
+        /* Toast bildirishnoma */
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -137,10 +138,10 @@
         <button id="theme-btn">Qorong'u rejimni yoqish</button>
     </div>
 
-    <!-- Ekranda chiqib keluvchi bildirishnoma -->
-    <div id="toast">Muvaffaqiyatli yuborildi!</div>
+    <div id="toast">Bildirishnoma</div>
 
     <script>
+        // 1. Qorong'u rejim (har qanday holatda ham ishlaydi)
         const btn = document.getElementById('theme-btn');
         const body = document.body;
 
@@ -149,13 +150,7 @@
             btn.textContent = body.classList.contains('dark-mode') ? "Yorug' rejimni yoqish" : "Qorong'u rejimni yoqish";
         });
 
-        // Sizning Supabase ma'lumotlaringiz
-        const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co';
-        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
-        
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        // Toast xabarni chiqarish funksiyasi
+        // Toast xabar chiqarish funksiyasi
         function showToast(text, color = '#28a745') {
             const toast = document.getElementById('toast');
             toast.textContent = text;
@@ -166,8 +161,22 @@
             }, 3000);
         }
 
+        // 2. Supabase ulanishi va xavfsiz tekshiruv
+        const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co';
+        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
+        
+        let supabase = null;
+        try {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            }
+        } catch (e) {
+            console.error("Supabase yaratishda xato:", e);
+        }
+
         // Bazadagi xabarlarni o'qib olish
         async function xabarlarniOlish() {
+            if (!supabase) return;
             const listDiv = document.getElementById('xabarlarList');
             const { data, error } = await supabase
                 .from('xabarlar')
@@ -180,22 +189,31 @@
             }
 
             listDiv.innerHTML = '';
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'xabar-item';
-                div.textContent = item.matn;
-                listDiv.appendChild(div);
-            });
+            if (data) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'xabar-item';
+                    div.textContent = item.matn;
+                    listDiv.appendChild(div);
+                });
+            }
         }
 
-        xabarlarniOlish();
+        if (supabase) {
+            xabarlarniOlish();
+        }
 
-        // Jo'natish tugmasi bosilganda
+        // Jo'natish tugmasi
         document.getElementById('yuborishBtn').addEventListener('click', async () => {
             const kiritilganMatn = document.getElementById('xabarInput').value;
 
-            if(!kiritilganMatn) {
+            if (!kiritilganMatn) {
                 showToast("Iltimos, matn kiriting!", "#ffc107");
+                return;
+            }
+
+            if (!supabase) {
+                showToast("Baza bilan aloqa yo'q!", "#dc3545");
                 return;
             }
 
