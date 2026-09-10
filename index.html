@@ -15,15 +15,16 @@
             --container-bg: #fff;
             --input-bg: #fff;
             --input-border: #ccc;
+            --item-bg: #f9f9f9;
         }
 
-        /* Qorong'u rejim ranglari */
         body.dark-mode {
             --bg-color: #1a1a2e;
             --text-color: #e0e0e0;
             --container-bg: #16213e;
             --input-bg: #1f2a4c;
             --input-border: #444;
+            --item-bg: #1f2a4c;
         }
 
         body {
@@ -33,23 +34,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             transition: 0.3s;
         }
 
         .container {
             background-color: var(--container-bg);
-            padding: 40px;
+            padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
             width: 90%;
+            max-width: 400px;
             transition: 0.3s;
         }
 
-        h1 { color: #0070f3; margin-top: 0; }
+        h1 { color: #0070f3; margin-top: 0; text-align: center; }
 
         button {
             background-color: #0070f3;
@@ -59,9 +59,9 @@
             font-size: 14px;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: 0.3s;
+            margin-top: 10px;
             width: 100%;
+            transition: 0.3s;
         }
 
         button:hover { background-color: #005bb5; }
@@ -72,7 +72,7 @@
         input {
             width: calc(100% - 22px);
             padding: 10px;
-            margin-top: 15px;
+            margin-top: 10px;
             border-radius: 6px;
             border: 1px solid var(--input-border);
             background-color: var(--input-bg);
@@ -80,52 +80,91 @@
             outline: none;
         }
         
-        #natija { margin-top: 15px; font-weight: bold; font-size: 14px; }
+        #natija { margin-top: 10px; font-weight: bold; font-size: 13px; text-align: center; }
+
+        /* Xabarlar ro'yxati dizayni */
+        #xabarlarList {
+            margin-top: 20px;
+            max-height: 180px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .xabar-item {
+            background-color: var(--item-bg);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--input-border);
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Xabar Yuborish</h1>
-        <p>Supabase bazasiga xabar qoldiring.</p>
+        <h1>Xabarlar</h1>
         
-        <!-- Xabar kiritish qismi -->
         <input type="text" id="xabarInput" placeholder="Matn kiriting...">
         <button id="yuborishBtn">Jo'natish</button>
         <p id="natija"></p>
 
-        <hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--input-border);">
+        <!-- Bazadagi xabarlar chiqib turadigan joy -->
+        <div id="xabarlarList"></div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--input-border);">
         
-        <!-- Rejimni o'zgartirish qismi -->
         <button id="theme-btn">Qorong'u rejimni yoqish</button>
     </div>
 
     <script>
-        // --- DARK MODE LOGIKASI ---
+        // Qorong'u rejimni boshqarish
         const btn = document.getElementById('theme-btn');
         const body = document.body;
 
         btn.addEventListener('click', () => {
             body.classList.toggle('dark-mode');
-            if(body.classList.contains('dark-mode')) {
-                btn.textContent = "Yorug' rejimni yoqish";
-            } else {
-                btn.textContent = "Qorong'u rejimni yoqish";
-            }
+            btn.textContent = body.classList.contains('dark-mode') ? "Yorug' rejimni yoqish" : "Qorong'u rejimni yoqish";
         });
 
-        // --- SUPABASE LOGIKASI ---
-        // DIQQAT: Supabase loyihangizdan olingan URL va KEY ni shu yerga kiriting!
+        // Supabase ulanishi (O'zingizning URL va Key'ingizni yozing)
         const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co/';
-        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
+        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU ';
         
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+        // 1. Bazadagi xabarlarni o'qib olib, ekranga chiqaruvchi funksiya
+        async function xabarlarniOlish() {
+            const listDiv = document.getElementById('xabarlarList');
+            
+            const { data, error } = await supabase
+                .from('xabarlar')
+                .select('*')
+                .order('id', { ascending: false }); // Yangi xabarlar tepada chiqishi uchun
+
+            if (error) {
+                console.error('Xatolik:', error.message);
+                return;
+            }
+
+            // Avvalgi ro'yxatni tozalab, bazadagilarni chiroyli qilib chiqaramiz
+            listDiv.innerHTML = '';
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'xabar-item';
+                div.textContent = item.matn;
+                listDiv.appendChild(div);
+            });
+        }
+
+        // Sahifa ochilishi bilan mavjud xabarlarni yuklash
+        xabarlarniOlish();
+
+        // 2. Tugma bosilganda yangi xabar yuborish
         document.getElementById('yuborishBtn').addEventListener('click', async () => {
             const kiritilganMatn = document.getElementById('xabarInput').value;
             const natija = document.getElementById('natija');
 
-            // Agar input bo'sh bo'lsa, ogohlantirish
             if(!kiritilganMatn) {
                 natija.style.color = "orange";
                 natija.textContent = "Iltimos, matn kiriting!";
@@ -135,12 +174,9 @@
             natija.style.color = "var(--text-color)";
             natija.textContent = "Yuborilmoqda...";
 
-            // Bazadagi "xabarlar" jadvaliga ma'lumotni kiritish
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('xabarlar') 
-                .insert([ 
-                    { matn: kiritilganMatn } 
-                ]);
+                .insert([{ matn: kiritilganMatn }]);
 
             if (error) {
                 natija.style.color = "red";
@@ -149,13 +185,12 @@
                 natija.style.color = "green";
                 natija.textContent = "Muvaffaqiyatli yuborildi!";
                 document.getElementById('xabarInput').value = ''; // Inputni tozalash
+                
+                // Yangi xabar qo'shilgach, ro'yxatni darhol yangilash
+                xabarlarniOlish();
             }
         });
-        
-
     </script>
 
-   
-
 </body>
-</html>     
+</html>
