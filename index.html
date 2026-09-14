@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vercel va Supabase Loyihasi</title>
-    
+    <title>Sodda Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
         :root {
             --bg-color: #f4f4f9;
@@ -14,7 +12,7 @@
             --container-bg: #fff;
             --input-bg: #fff;
             --input-border: #ccc;
-            --item-bg: #f9f9f9;
+            --primary: #0070f3;
         }
 
         body.dark-mode {
@@ -23,51 +21,45 @@
             --container-bg: #16213e;
             --input-bg: #1f2a4c;
             --input-border: #444;
-            --item-bg: #1f2a4c;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
+            margin: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            transition: 0.3s;
+        }
+
+        .header {
+            width: 100%;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
         .container {
             background-color: var(--container-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 10px;
             width: 90%;
-            max-width: 400px;
-            position: relative;
-            z-index: 10;
-        }
-
-        h1 { color: #0070f3; margin-top: 0; text-align: center; }
-
-        button {
-            background-color: #0070f3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 6px;
-            cursor: pointer;
+            max-width: 450px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             margin-top: 10px;
-            width: 100%;
-            transition: 0.3s;
         }
-
-        button:hover { background-color: #005bb5; }
-        
-        #theme-btn { background-color: #555; }
-        #theme-btn:hover { background-color: #333; }
 
         input {
             width: calc(100% - 22px);
@@ -80,159 +72,264 @@
             outline: none;
         }
 
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background-color: var(--container-bg);
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 320px;
+            position: relative;
+        }
+
+        .switch-link {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
         #xabarlarList {
-            margin-top: 20px;
-            max-height: 180px;
+            margin-top: 15px;
+            max-height: 250px;
             overflow-y: auto;
-            text-align: left;
         }
 
         .xabar-item {
-            background-color: var(--item-bg);
-            padding: 8px 12px;
+            background-color: var(--input-bg);
+            padding: 10px 12px;
             margin-bottom: 8px;
             border-radius: 6px;
             border: 1px solid var(--input-border);
             font-size: 14px;
         }
 
+        .xabar-author {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+
         #toast {
             visibility: hidden;
-            min-width: 250px;
+            min-width: 200px;
             background-color: #28a745;
             color: #fff;
             text-align: center;
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 10px;
             position: fixed;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 9999;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
             opacity: 0;
-            transition: opacity 0.4s, bottom 0.4s;
-            pointer-events: none;
+            transition: 0.3s;
         }
-
-        #toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
-        }
+        #toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Xabarlar</h1>
-        
-        <input type="text" id="xabarInput" placeholder="Matn kiriting...">
-        <button id="yuborishBtn" type="button">Jo'natish</button>
-
-        <div id="xabarlarList"></div>
-
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--input-border);">
-        
-        <button id="theme-btn" type="button">Qorong'u rejimni yoqish</button>
+    <div class="header">
+        <button id="themeBtn" class="btn" style="background-color: #555;">🌙</button>
+        <div>
+            <select id="langSelect" style="padding: 8px; border-radius: 6px;">
+                <option value="uz">UZ</option>
+                <option value="ru">RU</option>
+                <option value="en">EN</option>
+            </select>
+            <button id="authBtn" class="btn">Kirish</button>
+        </div>
     </div>
 
-    <div id="toast">Bildirishnoma</div>
+    <div class="container">
+        <h2 style="text-align: center; color: var(--primary);" id="chatTitle">Xabarlar</h2>
+        <input type="text" id="xabarInput" placeholder="Xabar yozing...">
+        <button id="yuborishBtn" class="btn" style="width: 100%; margin-top: 10px;">Jo'natish</button>
+        <div id="xabarlarList"></div>
+    </div>
+
+    <!-- Modal (Login/Register) -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content">
+            <span id="closeModal" style="position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 20px;">&times;</span>
+            
+            <!-- Kirish -->
+            <div id="loginBox">
+                <h3 style="text-align: center;" id="lTitle">Kirish</h3>
+                <input type="text" id="loginNick" placeholder="Nick Name (Taxallus)...">
+                <input type="password" id="loginPass" placeholder="Parol...">
+                <button id="loginSubmit" class="btn" style="width: 100%; margin-top: 10px;">Kirish</button>
+                <span class="switch-link" id="toReg">Akkaunt yo'qmi? Ro'yxatdan o'tish</span>
+            </div>
+
+            <!-- Ro'yxatdan o'tish -->
+            <div id="regBox" style="display: none;">
+                <h3 style="text-align: center;" id="rTitle">Ro'yxatdan o'tish</h3>
+                <input type="text" id="regNick" placeholder="Nick Name o'ylab toping...">
+                <input type="password" id="regPass" placeholder="Parol (kamida 6 ta belgi)...">
+                <button id="regSubmit" class="btn" style="width: 100%; margin-top: 10px;">Ro'yxatdan o'tish</button>
+                <span class="switch-link" id="toLog">Akkaunt bormi? Kirish</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const themeBtn = document.getElementById('theme-btn');
-            const body = document.body;
+        const dict = {
+            uz: { login: "Kirish", logout: "Chiqish", title: "Xabarlar", ph: "Xabar yozing...", send: "Jo'natish", noAcc: "Akkaunt yo'qmi? Ro'yxatdan o'tish", hasAcc: "Akkaunt bormi? Kirish", err: "Xatolik!", ok: "Muvaffaqiyatli!", authErr: "Xabar yozish uchun avval kiring!", shortPass: "Parol kamida 6 ta belgi bo'lishi shart!" },
+            ru: { login: "Войти", logout: "Выйти", title: "Сообщения", ph: "Введите сообщение...", send: "Отправить", noAcc: "Нет аккаунта? Регистрация", hasAcc: "Есть аккаунт? Войти", err: "Ошибка!", ok: "Успешно!", authErr: "Сначала войдите!", shortPass: "Пароль должен быть минимум 6 символов!" },
+            en: { login: "Login", logout: "Logout", title: "Messages", ph: "Type a message...", send: "Send", noAcc: "No account? Register", hasAcc: "Have account? Login", err: "Error!", ok: "Success!", authErr: "Please login first!", shortPass: "Password must be at least 6 characters!" }
+        };
 
-            themeBtn.addEventListener('click', () => {
-                body.classList.toggle('dark-mode');
-                themeBtn.textContent = body.classList.contains('dark-mode') ? "Yorug' rejimni yoqish" : "Qorong'u rejimni yoqish";
-            });
+        let lang = 'uz';
 
-            function showToast(text, color = '#28a745') {
-                const toast = document.getElementById('toast');
-                toast.textContent = text;
-                toast.style.backgroundColor = color;
-                toast.className = "show";
-                setTimeout(() => {
-                    toast.className = "";
-                }, 3000);
-            }
+        function applyLang(l) {
+            lang = l;
+            document.getElementById('chatTitle').textContent = dict[l].title;
+            document.getElementById('xabarInput').placeholder = dict[l].ph;
+            document.getElementById('yuborishBtn').textContent = dict[l].send;
+            document.getElementById('toReg').textContent = dict[l].noAcc;
+            document.getElementById('toLog').textContent = dict[l].hasAcc;
+            updateBtn();
+        }
 
-            const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co';
-            const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
-            
-            let supabaseClient = null;
-            try {
-                if (window.supabase) {
-                    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                }
-            } catch (e) {
-                console.error("Supabase xatosi:", e);
-            }
+        document.getElementById('langSelect').addEventListener('change', (e) => applyLang(e.target.value));
 
-            async function xabarlarniOlish() {
-                if (!supabaseClient) return;
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('xabarlar')
-                        .select('*')
-                        .order('id', { ascending: false });
+        function showToast(txt, bg = '#28a745') {
+            const t = document.getElementById('toast');
+            t.textContent = txt;
+            t.style.backgroundColor = bg;
+            t.className = "show";
+            setTimeout(() => t.className = "", 3000);
+        }
 
-                    if (error) {
-                        console.error('O‘qishda xatolik:', error.message);
-                        return;
-                    }
-
-                    const listDiv = document.getElementById('xabarlarList');
-                    listDiv.innerHTML = '';
-                    if (data) {
-                        data.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'xabar-item';
-                            div.textContent = item.matn;
-                            listDiv.appendChild(div);
-                        });
-                    }
-                } catch (err) {
-                    console.error('Tarmoq xatosi:', err);
-                }
-            }
-
-            if (supabaseClient) {
-                xabarlarniOlish();
-            }
-
-            const yuborishBtn = document.getElementById('yuborishBtn');
-            yuborishBtn.addEventListener('click', async () => {
-                const inputElement = document.getElementById('xabarInput');
-                const kiritilganMatn = inputElement.value.trim();
-
-                if (!kiritilganMatn) {
-                    showToast("Iltimos, matn kiriting!", "#ffc107");
-                    return;
-                }
-
-                if (!supabaseClient) {
-                    showToast("Baza bilan aloqa yo'q!", "#dc3545");
-                    return;
-                }
-
-                const { error } = await supabaseClient
-                    .from('xabarlar') 
-                    .insert([{ matn: kiritilganMatn }]);
-
-                if (error) {
-                    showToast("Xato: " + error.message, "#dc3545");
-                } else {
-                    showToast("Muvaffaqiyatli yuborildi!", "#28a745");
-                    inputElement.value = ''; 
-                    xabarlarniOlish();
-                }
-            });
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
         });
-    </script>
 
+        const modal = document.getElementById('authModal');
+        const loginBox = document.getElementById('loginBox');
+        const regBox = document.getElementById('regBox');
+
+        document.getElementById('closeModal').onclick = () => modal.classList.remove('active');
+        document.getElementById('toReg').onclick = () => { loginBox.style.display = 'none'; regBox.style.display = 'block'; };
+        document.getElementById('toLog').onclick = () => { regBox.style.display = 'none'; loginBox.style.display = 'block'; };
+
+        const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co';
+        const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
+        const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+        let currentUser = null;
+
+        supabaseClient.auth.onAuthStateChange((evt, session) => {
+            currentUser = session ? session.user : null;
+            updateBtn();
+            if(currentUser) modal.classList.remove('active');
+        });
+
+        function updateBtn() {
+            const btn = document.getElementById('authBtn');
+            if (currentUser) {
+                btn.textContent = dict[lang].logout;
+                btn.onclick = async () => { await supabaseClient.auth.signOut(); showToast(dict[lang].ok); };
+            } else {
+                btn.textContent = dict[lang].login;
+                btn.onclick = () => { loginBox.style.display = 'block'; regBox.style.display = 'none'; modal.classList.add('active'); };
+            }
+        }
+
+        async function loadMsgs() {
+            const { data } = await supabaseClient.from('xabarlar').select('*').order('id', { ascending: false });
+            const list = document.getElementById('xabarlarList');
+            list.innerHTML = '';
+            if (data) {
+                data.forEach(m => {
+                    const d = document.createElement('div');
+                    d.className = 'xabar-item';
+                    
+                    const authorDiv = document.createElement('div');
+                    authorDiv.className = 'xabar-author';
+                    authorDiv.textContent = m.author ? "@" + m.author : "@Noma'lum";
+
+                    const textDiv = document.createElement('div');
+                    textDiv.textContent = m.matn;
+
+                    d.appendChild(authorDiv);
+                    d.appendChild(textDiv);
+                    list.appendChild(d);
+                });
+            }
+        }
+        loadMsgs();
+
+        document.getElementById('yuborishBtn').onclick = async () => {
+            if(!currentUser) {
+                showToast(dict[lang].authErr, "#dc3545");
+                loginBox.style.display = 'none'; regBox.style.display = 'block'; modal.classList.add('active');
+                return;
+            }
+            const inp = document.getElementById('xabarInput');
+            if(!inp.value.trim()) return;
+
+            // Nickname ni email dan ajratib olamiz
+            const currentNick = currentUser.email.split('@')[0];
+
+            const { error } = await supabaseClient.from('xabarlar').insert([{ 
+                matn: inp.value.trim(), 
+                author: currentNick 
+            }]);
+
+            if(!error) { inp.value = ''; loadMsgs(); showToast(dict[lang].ok); }
+            else showToast(error.message, "#dc3545");
+        };
+
+        document.getElementById('regSubmit').onclick = async () => {
+            const nick = document.getElementById('regNick').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+
+            if(!nick) return showToast(dict[lang].err, "#ffc107");
+            if(pass.length < 6) return showToast(dict[lang].shortPass, "#dc3545");
+
+            const fakeEmail = nick.toLowerCase() + "@site.com";
+            const { error } = await supabaseClient.auth.signUp({ email: fakeEmail, password: pass });
+
+            if(error) showToast("Xato: " + error.message, "#dc3545");
+            else showToast(dict[lang].ok);
+        };
+
+        document.getElementById('loginSubmit').onclick = async () => {
+            const nick = document.getElementById('loginNick').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+
+            if(!nick || !pass) return showToast(dict[lang].err, "#ffc107");
+
+            const fakeEmail = nick.toLowerCase() + "@site.com";
+            const { error } = await supabaseClient.auth.signInWithPassword({ email: fakeEmail, password: pass });
+
+            if(error) showToast("Nick Name yoki parol xato!", "#dc3545");
+            else showToast(dict[lang].ok);
+        };
+
+        applyLang('uz');
+    </script>
 </body>
 </html>
