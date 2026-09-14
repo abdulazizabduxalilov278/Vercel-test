@@ -97,15 +97,6 @@
             position: relative;
         }
 
-        .switch-link {
-            display: block;
-            text-align: center;
-            margin-top: 12px;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 14px;
-        }
-
         #xabarlarList {
             margin-top: 15px;
             max-height: 250px;
@@ -167,28 +158,16 @@
         <div id="xabarlarList"></div>
     </div>
 
-    <!-- Modal (Login/Register) -->
+    <!-- Facebook uslubidagi yagona Kirish oynasi -->
     <div class="modal-overlay" id="authModal">
         <div class="modal-content">
             <span id="closeModal" style="position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 20px;">&times;</span>
+            <h3 style="text-align: center; margin-top: 0;" id="lTitle">Tizimga kirish</h3>
+            <p style="font-size: 12px; text-align: center; color: #777;">Agar akkauntingiz bo'lmasa, avtomatik ochiladi.</p>
             
-            <!-- Kirish -->
-            <div id="loginBox">
-                <h3 style="text-align: center;" id="lTitle">Kirish</h3>
-                <input type="text" id="loginNick" placeholder="Nick Name (Taxallus)...">
-                <input type="password" id="loginPass" placeholder="Parol...">
-                <button id="loginSubmit" class="btn" style="width: 100%; margin-top: 10px;">Kirish</button>
-                <span class="switch-link" id="toReg">Akkaunt yo'qmi? Ro'yxatdan o'tish</span>
-            </div>
-
-            <!-- Ro'yxatdan o'tish -->
-            <div id="regBox" style="display: none;">
-                <h3 style="text-align: center;" id="rTitle">Ro'yxatdan o'tish</h3>
-                <input type="text" id="regNick" placeholder="Nick Name o'ylab toping...">
-                <input type="password" id="regPass" placeholder="Parol (kamida 6 ta belgi)...">
-                <button id="regSubmit" class="btn" style="width: 100%; margin-top: 10px;">Ro'yxatdan o'tish</button>
-                <span class="switch-link" id="toLog">Akkaunt bormi? Kirish</span>
-            </div>
+            <input type="text" id="loginNick" placeholder="Nick Name...">
+            <input type="password" id="loginPass" placeholder="Parol (kamida 6 ta belgi)...">
+            <button id="loginSubmit" class="btn" style="width: 100%; margin-top: 15px;">Kirish</button>
         </div>
     </div>
 
@@ -196,9 +175,9 @@
 
     <script>
         const dict = {
-            uz: { login: "Kirish", logout: "Chiqish", title: "Xabarlar", ph: "Xabar yozing...", send: "Jo'natish", noAcc: "Akkaunt yo'qmi? Ro'yxatdan o'tish", hasAcc: "Akkaunt bormi? Kirish", err: "Xatolik!", ok: "Muvaffaqiyatli!", authErr: "Xabar yozish uchun avval kiring!", shortPass: "Parol kamida 6 ta belgi bo'lishi shart!" },
-            ru: { login: "Войти", logout: "Выйти", title: "Сообщения", ph: "Введите сообщение...", send: "Отправить", noAcc: "Нет аккаунта? Регистрация", hasAcc: "Есть аккаунт? Войти", err: "Ошибка!", ok: "Успешно!", authErr: "Сначала войдите!", shortPass: "Пароль должен быть минимум 6 символов!" },
-            en: { login: "Login", logout: "Logout", title: "Messages", ph: "Type a message...", send: "Send", noAcc: "No account? Register", hasAcc: "Have account? Login", err: "Error!", ok: "Success!", authErr: "Please login first!", shortPass: "Password must be at least 6 characters!" }
+            uz: { login: "Kirish", logout: "Chiqish", title: "Xabarlar", ph: "Xabar yozing...", send: "Jo'natish", err: "Maydonlarni to'ldiring!", ok: "Muvaffaqiyatli!", authErr: "Xabar yozish uchun avval kiring!", shortPass: "Parol kamida 6 ta belgi bo'lishi shart!" },
+            ru: { login: "Войти", logout: "Выйти", title: "Сообщения", ph: "Введите сообщение...", send: "Отправить", err: "Заполните поля!", ok: "Успешно!", authErr: "Сначала войдите!", shortPass: "Пароль должен быть минимум 6 символов!" },
+            en: { login: "Login", logout: "Logout", title: "Messages", ph: "Type a message...", send: "Send", err: "Fill in fields!", ok: "Success!", authErr: "Please login first!", shortPass: "Password must be at least 6 characters!" }
         };
 
         let lang = 'uz';
@@ -208,8 +187,6 @@
             document.getElementById('chatTitle').textContent = dict[l].title;
             document.getElementById('xabarInput').placeholder = dict[l].ph;
             document.getElementById('yuborishBtn').textContent = dict[l].send;
-            document.getElementById('toReg').textContent = dict[l].noAcc;
-            document.getElementById('toLog').textContent = dict[l].hasAcc;
             updateBtn();
         }
 
@@ -228,12 +205,7 @@
         });
 
         const modal = document.getElementById('authModal');
-        const loginBox = document.getElementById('loginBox');
-        const regBox = document.getElementById('regBox');
-
         document.getElementById('closeModal').onclick = () => modal.classList.remove('active');
-        document.getElementById('toReg').onclick = () => { loginBox.style.display = 'none'; regBox.style.display = 'block'; };
-        document.getElementById('toLog').onclick = () => { regBox.style.display = 'none'; loginBox.style.display = 'block'; };
 
         const supabaseUrl = 'https://dfetxagpkertqafomckx.supabase.co';
         const supabaseKey = 'sb_publishable_lbnKuSiSvQIbON2Akddy8Q_cY_85JgU';
@@ -253,7 +225,7 @@
                 btn.onclick = async () => { await supabaseClient.auth.signOut(); showToast(dict[lang].ok); };
             } else {
                 btn.textContent = dict[lang].login;
-                btn.onclick = () => { loginBox.style.display = 'block'; regBox.style.display = 'none'; modal.classList.add('active'); };
+                btn.onclick = () => { modal.classList.add('active'); };
             }
         }
 
@@ -284,13 +256,12 @@
         document.getElementById('yuborishBtn').onclick = async () => {
             if(!currentUser) {
                 showToast(dict[lang].authErr, "#dc3545");
-                loginBox.style.display = 'none'; regBox.style.display = 'block'; modal.classList.add('active');
+                modal.classList.add('active');
                 return;
             }
             const inp = document.getElementById('xabarInput');
             if(!inp.value.trim()) return;
 
-            // Nickname ni email dan ajratib olamiz
             const currentNick = currentUser.email.split('@')[0];
 
             const { error } = await supabaseClient.from('xabarlar').insert([{ 
@@ -302,31 +273,37 @@
             else showToast(error.message, "#dc3545");
         };
 
-        document.getElementById('regSubmit').onclick = async () => {
-            const nick = document.getElementById('regNick').value.trim();
-            const pass = document.getElementById('regPass').value.trim();
-
-            if(!nick) return showToast(dict[lang].err, "#ffc107");
-            if(pass.length < 6) return showToast(dict[lang].shortPass, "#dc3545");
-
-            const fakeEmail = nick.toLowerCase() + "@site.com";
-            const { error } = await supabaseClient.auth.signUp({ email: fakeEmail, password: pass });
-
-            if(error) showToast("Xato: " + error.message, "#dc3545");
-            else showToast(dict[lang].ok);
-        };
-
+        // Facebook uslubi: Avval kirishga harakat qiladi, agar akkaunt yo'q bo'lsa o'zi avtomatik ro'yxatdan o'tkazib yuboradi
         document.getElementById('loginSubmit').onclick = async () => {
             const nick = document.getElementById('loginNick').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
             if(!nick || !pass) return showToast(dict[lang].err, "#ffc107");
+            if(pass.length < 6) return showToast(dict[lang].shortPass, "#dc3545");
 
             const fakeEmail = nick.toLowerCase() + "@site.com";
-            const { error } = await supabaseClient.auth.signInWithPassword({ email: fakeEmail, password: pass });
 
-            if(error) showToast("Nick Name yoki parol xato!", "#dc3545");
-            else showToast(dict[lang].ok);
+            // 1. Avval tizimga kirishni (SignIn) tekshiramiz
+            let { error } = await supabaseClient.auth.signInWithPassword({
+                email: fakeEmail,
+                password: pass
+            });
+
+            // 2. Agar bunday akkaunt topilmasa (ya'ni birinchi marta kirayotgan bo'lsa), o'zi avtomatik ro'yxatdan o'tkazadi (SignUp)
+            if (error) {
+                let signUpRes = await supabaseClient.auth.signUp({
+                    email: fakeEmail,
+                    password: pass
+                });
+                
+                if (signUpRes.error) {
+                    showToast("Xato: " + signUpRes.error.message, "#dc3545");
+                } else {
+                    showToast(dict[lang].ok);
+                }
+            } else {
+                showToast(dict[lang].ok);
+            }
         };
 
         applyLang('uz');
