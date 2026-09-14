@@ -51,6 +51,11 @@
             cursor: pointer;
         }
 
+        .btn:disabled {
+            background-color: #777;
+            cursor: not-allowed;
+        }
+
         .container {
             background-color: var(--container-bg);
             padding: 25px;
@@ -163,7 +168,6 @@
         <div class="modal-content">
             <span id="closeModal" style="position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 20px;">&times;</span>
             <h3 style="text-align: center; margin-top: 0;" id="lTitle">Tizimga kirish</h3>
-            <p style="font-size: 12px; text-align: center; color: #777;">Agar akkauntingiz bo'lmasa, avtomatik ochiladi.</p>
             
             <input type="text" id="loginNick" placeholder="Nick Name...">
             <input type="password" id="loginPass" placeholder="Parol (kamida 6 ta belgi)...">
@@ -212,10 +216,17 @@
         const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
         let currentUser = null;
 
+        // Xavfsizlik (Brute-force) uchun o'zgaruvchilar
+        let failedAttempts = 0;
+        let lockTime = 0; // soniyalarda
+
         supabaseClient.auth.onAuthStateChange((evt, session) => {
             currentUser = session ? session.user : null;
             updateBtn();
-            if(currentUser) modal.classList.remove('active');
+            if(currentUser) {
+                modal.classList.remove('active');
+                failedAttempts = 0; // Muvaffaqiyatli kirganda xatolar sanog'i tozalanadi
+            }
         });
 
         function updateBtn() {
@@ -273,8 +284,16 @@
             else showToast(error.message, "#dc3545");
         };
 
-        // Facebook uslubi: Avval kirishga harakat qiladi, agar akkaunt yo'q bo'lsa o'zi avtomatik ro'yxatdan o'tkazib yuboradi
+        // Eksponentsial blokirovka mexanizmi bilan Kirish
         document.getElementById('loginSubmit').onclick = async () => {
+            const submitBtn = document.getElementById('loginSubmit');
+
+            // Agar vaqtinchalik blokirovka tugamagan bo'lsa
+            if (lockTime > 0) {
+                showToast(`Juda ko'p xato urinish! ${lockTime} sekund kuting.`, "#dc3545");
+                return;
+            }
+
             const nick = document.getElementById('loginNick').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
@@ -283,13 +302,11 @@
 
             const fakeEmail = nick.toLowerCase() + "@site.com";
 
-            // 1. Avval tizimga kirishni (SignIn) tekshiramiz
             let { error } = await supabaseClient.auth.signInWithPassword({
                 email: fakeEmail,
                 password: pass
             });
 
-            // 2. Agar bunday akkaunt topilmasa (ya'ni birinchi marta kirayotgan bo'lsa), o'zi avtomatik ro'yxatdan o'tkazadi (SignUp)
             if (error) {
                 let signUpRes = await supabaseClient.auth.signUp({
                     email: fakeEmail,
@@ -297,7 +314,27 @@
                 });
                 
                 if (signUpRes.error) {
-                    showToast("Xato: " + signUpRes.error.message, "#dc3545");
+                    failedAttempts++; // Xato urinishlar sonini oshiramiz
+                    
+                    // Har 3 ta xatoda blokirovka vaqtini 2 baravar oshiramiz (60s -> 120s -> 240s...)
+                    if (failedAttempts % 3 === 0) {
+                        lockTime = (failedAttempts === 3) ? 60 : lockTime * 2;
+                        submitBtn.disabled = true;
+
+                        let timer = setInterval(() => {
+                            lockTime--;
+                            submitBtn.textContent = `Bloklandi (${lockTime}s)`;
+                            if (lockTime <= 0) {
+                                clearInterval(timer);
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = "Kirish";
+                            }
+                        }, 1000);
+
+                        showToast(`Juda ko'p xato! ${lockTime} sekundga bloklandi.`, "#dc3545");
+                    } else {
+                        showToast("Parol yoki Nick Name xato!", "#dc3545");
+                    }
                 } else {
                     showToast(dict[lang].ok);
                 }
